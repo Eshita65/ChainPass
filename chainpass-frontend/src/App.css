@@ -1,0 +1,163 @@
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.wallet-panel {
+  width: min(760px, 100%);
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top, rgba(170, 59, 255, 0.14), transparent 35%),
+    var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.app-stack {
+  display: grid;
+  gap: 20px;
+}
+
+.eyebrow {
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  color: var(--accent);
+}
+
+.subtitle {
+  margin-bottom: 24px;
+}
+
+.wallet-card {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--social-bg);
+}
+
+.panel {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--social-bg);
+  text-align: left;
+}
+
+.detail-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.button-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.muted-text {
+  margin: 0;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.error-text {
+  margin: 0;
+  color: #dc2626;
+  word-break: break-word;
+}
+
+.success-text {
+  margin: 0;
+  color: #15803d;
+}
+
+.status {
+  justify-self: start;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--code-bg);
+  color: var(--text-h);
+  font-size: 0.9rem;
+}
+
+.status.connected {
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+}
+
+.wallet-address {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  color: var(--text-h);
+}
+
+.wallet-helper {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.wallet-button {
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(135deg, #8f31d9, var(--accent));
+}
+
+.wallet-button.secondary {
+  color: var(--text-h);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+.wallet-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
