@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { parseEther } from 'viem'
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '../abi'
@@ -24,6 +24,7 @@ function toUnixSeconds(value) {
 export default function CreateEventForm() {
   const [form, setForm] = useState(initialForm)
   const [imageFile, setImageFile] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
   const [imageCID, setImageCID] = useState('')
   const [uploadLoading, setUploadLoading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState('')
@@ -33,6 +34,12 @@ export default function CreateEventForm() {
   const { isConnected } = useAccount()
   const { data: hash, error, isPending, writeContract } = useWriteContract()
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
 
   const isBusy = isPending || isConfirming
 
@@ -98,13 +105,20 @@ export default function CreateEventForm() {
 
   async function handleImageChange(event) {
     const file = event.target.files?.[0]
+    let nextPreviewUrl = ''
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
 
     setImageFile(file ?? null)
+    setPreviewUrl('')
     setImageCID('')
     setUploadStatus('')
     setUploadError('')
 
     if (!file) return
+
+    nextPreviewUrl = URL.createObjectURL(file)
+    setPreviewUrl(nextPreviewUrl)
 
     setUploadLoading(true)
     setUploadStatus('Uploading image...')
@@ -286,18 +300,22 @@ export default function CreateEventForm() {
 
       {!isConnected && <p className="muted-text">Connect MetaMask before creating an event.</p>}
       {imageFile && <p className="muted-text">Selected image: {imageFile.name}</p>}
+      {!imageCID && previewUrl && (
+        <img
+          className="preview-image"
+          src={previewUrl}
+          alt="Selected event preview"
+        />
+      )}
       {uploadLoading && <p className="muted-text">Uploading image...</p>}
       {uploadStatus && !uploadLoading && <p className="success-text">{uploadStatus}</p>}
       {uploadError && <p className="error-text">{uploadError}</p>}
       {imageCID && (
-        <>
-          <p className="muted-text">Uploaded CID: {imageCID}</p>
-          <img
-            className="preview-image"
-            src={`https://gateway.pinata.cloud/ipfs/${imageCID}`}
-            alt="Uploaded event preview"
-          />
-        </>
+        <img
+          className="preview-image"
+          src={`https://gateway.pinata.cloud/ipfs/${imageCID}`}
+          alt="Uploaded event preview"
+        />
       )}
       {timePreview && (
         <p className="muted-text">
