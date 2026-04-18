@@ -89,6 +89,13 @@
   resize: vertical;
 }
 
+.preview-image {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
 .button-row {
   display: flex;
   gap: 12px;

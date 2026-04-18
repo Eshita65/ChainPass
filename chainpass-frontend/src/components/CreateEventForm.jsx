@@ -3,6 +3,8 @@ import { parseEther } from 'viem'
 import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from '../abi'
 
+const PINATA_JWT = import.meta.env.VITE_PINATA_JWT ?? import.meta.env.PINATA_JWT
+
 const initialForm = {
   name: '',
   venue: '',
@@ -12,9 +14,6 @@ const initialForm = {
   saleEndTime: '',
   eventStartTime: '',
   eventEndTime: '',
-  cidUpcoming: '',
-  cidLive: '',
-  cidAttended: '',
   cashbackPool: '',
 }
 
@@ -24,6 +23,11 @@ function toUnixSeconds(value) {
 
 export default function CreateEventForm() {
   const [form, setForm] = useState(initialForm)
+  const [imageFile, setImageFile] = useState(null)
+  const [imageCID, setImageCID] = useState('')
+  const [uploadLoading, setUploadLoading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState('')
+  const [uploadError, setUploadError] = useState('')
   const [validationError, setValidationError] = useState('')
   const [submittedName, setSubmittedName] = useState('')
   const { isConnected } = useAccount()
@@ -63,6 +67,60 @@ export default function CreateEventForm() {
     }))
   }
 
+  async function uploadToIPFS(file) {
+    if (!PINATA_JWT) {
+      throw new Error('Pinata JWT is missing. Set VITE_PINATA_JWT in your frontend env.')
+    }
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${PINATA_JWT}`,
+      },
+      body: formData,
+    })
+
+    const payload = await response.json()
+
+    if (!response.ok) {
+      throw new Error(payload?.error?.reason || payload?.message || 'Pinata upload failed.')
+    }
+
+    if (!payload?.IpfsHash) {
+      throw new Error('Pinata upload succeeded, but no CID was returned.')
+    }
+
+    return payload.IpfsHash
+  }
+
+  async function handleImageChange(event) {
+    const file = event.target.files?.[0]
+
+    setImageFile(file ?? null)
+    setImageCID('')
+    setUploadStatus('')
+    setUploadError('')
+
+    if (!file) return
+
+    setUploadLoading(true)
+    setUploadStatus('Uploading image...')
+
+    try {
+      const cid = await uploadToIPFS(file)
+      setImageCID(cid)
+      setUploadStatus('Upload successful')
+    } catch (uploadException) {
+      setUploadError(uploadException.message)
+      setUploadStatus('')
+    } finally {
+      setUploadLoading(false)
+    }
+  }
+
   function handleSubmit(event) {
     event.preventDefault()
     setValidationError('')
@@ -77,6 +135,11 @@ export default function CreateEventForm() {
       return
     }
 
+    if (!imageCID) {
+      setValidationError('Upload an event image to IPFS before creating the event.')
+      return
+    }
+
     const params = {
       name: form.name.trim(),
       venue: form.venue.trim(),
@@ -86,9 +149,9 @@ export default function CreateEventForm() {
       saleEndTime,
       eventStartTime,
       eventEndTime,
-      cidUpcoming: form.cidUpcoming.trim(),
-      cidLive: form.cidLive.trim(),
-      cidAttended: form.cidAttended.trim(),
+      cidUpcoming: imageCID,
+      cidLive: imageCID,
+      cidAttended: imageCID,
     }
 
     setSubmittedName(params.name)
@@ -193,18 +256,13 @@ export default function CreateEventForm() {
         </label>
 
         <label className="field">
-          <span className="label">CID Upcoming</span>
-          <input className="input" name="cidUpcoming" value={form.cidUpcoming} onChange={updateField} required />
-        </label>
-
-        <label className="field">
-          <span className="label">CID Live</span>
-          <input className="input" name="cidLive" value={form.cidLive} onChange={updateField} required />
-        </label>
-
-        <label className="field">
-          <span className="label">CID Attended</span>
-          <input className="input" name="cidAttended" value={form.cidAttended} onChange={updateField} required />
+          <span className="label">Event Image</span>
+          <input
+            className="input"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+          />
         </label>
 
         <label className="field">
@@ -227,6 +285,20 @@ export default function CreateEventForm() {
       </form>
 
       {!isConnected && <p className="muted-text">Connect MetaMask before creating an event.</p>}
+      {imageFile && <p className="muted-text">Selected image: {imageFile.name}</p>}
+      {uploadLoading && <p className="muted-text">Uploading image...</p>}
+      {uploadStatus && !uploadLoading && <p className="success-text">{uploadStatus}</p>}
+      {uploadError && <p className="error-text">{uploadError}</p>}
+      {imageCID && (
+        <>
+          <p className="muted-text">Uploaded CID: {imageCID}</p>
+          <img
+            className="preview-image"
+            src={`https://gateway.pinata.cloud/ipfs/${imageCID}`}
+            alt="Uploaded event preview"
+          />
+        </>
+      )}
       {timePreview && (
         <p className="muted-text">
           Unix seconds: {timePreview.saleStartTime.toString()} / {timePreview.saleEndTime.toString()} / {timePreview.eventStartTime.toString()} / {timePreview.eventEndTime.toString()}
